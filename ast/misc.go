@@ -2070,6 +2070,8 @@ type TableOptimizerHint struct {
 	MemoryQuota      int64
 	QueryType        model.CIStr
 	HintFlag         bool
+	SearchQuery      model.CIStr
+	SearchModifier   SearchModifierMode
 }
 
 // HintTable is table in the hint. It may have query block info.

@@ -542,6 +542,7 @@ import (
 	min			"MIN"
 	max			"MAX"
 	maxExecutionTime	"MAX_EXECUTION_TIME"
+  search "SEARCH"
 	now			"NOW"
 	position		"POSITION"
 	recent			"RECENT"
@@ -4500,7 +4501,7 @@ NotKeywordToken:
 | "INPLACE" | "INSTANT" | "INTERNAL" |"MIN" | "MAX" | "MAX_EXECUTION_TIME" | "NOW" | "RECENT" | "POSITION" | "SUBDATE" | "SUBSTRING" | "SUM"
 | "STD" | "STDDEV" | "STDDEV_POP" | "STDDEV_SAMP" | "VARIANCE" | "VAR_POP" | "VAR_SAMP"
 | "TIMESTAMPADD" | "TIMESTAMPDIFF" | "TOKUDB_DEFAULT" | "TOKUDB_FAST" | "TOKUDB_LZMA" | "TOKUDB_QUICKLZ" | "TOKUDB_SNAPPY" | "TOKUDB_SMALL" | "TOKUDB_UNCOMPRESSED" | "TOKUDB_ZLIB" | "TOP" | "TRIM" | "NEXT_ROW_ID"
-| "EXPR_PUSHDOWN_BLACKLIST" | "OPT_RULE_BLACKLIST"
+| "EXPR_PUSHDOWN_BLACKLIST" | "OPT_RULE_BLACKLIST" | "SEARCH"
 
 /************************************************************************************
  *
@@ -6861,6 +6862,15 @@ TableOptimizerHintOpt:
 |	maxExecutionTime '(' QueryBlockOpt NUM ')'
 	{
 		$$ = &ast.TableOptimizerHint{HintName: model.NewCIStr($1), QBName: $3.(model.CIStr), MaxExecutionTime: getUint64FromNUM($4)}
+	}
+|	search '(' QueryBlockOpt StringLiteral SearchModifierOpt ')'
+	{
+		$$ = &ast.TableOptimizerHint{
+      HintName: model.NewCIStr($1),
+      QBName: $3.(model.CIStr),
+      SearchQuery: model.NewCIStr($4.(ast.ValueExpr).GetString()),
+      SearchModifier: ast.SearchModifierMode($5.(int)),
+    }
 	}
 |	hintUsePlanCache '(' QueryBlockOpt ')'
 	{

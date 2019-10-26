@@ -2608,3 +2608,11 @@ func (n *SplitOption) Restore(ctx *RestoreCtx) error {
 	}
 	return nil
 }
+
+type SearchModifierMode int
+
+const (
+	SearchModifierNatureLanguageMode = 1 << iota
+	SearchModifierBooleanMode
+	SearchModifierWithQueryExpansion
+)

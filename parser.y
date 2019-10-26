@@ -175,7 +175,6 @@ import (
 	longblobType		"LONGBLOB"
 	longtextType		"LONGTEXT"
 	lowPriority		"LOW_PRIORITY"
-	match			"MATCH"
 	maxValue		"MAXVALUE"
 	mediumblobType		"MEDIUMBLOB"
 	mediumIntType		"MEDIUMINT"
@@ -517,6 +516,10 @@ import (
 	x509		"X509"
 	enforced	"ENFORCED"
 	nowait          "NOWAIT"
+	expansion	"EXPANSION"
+  language "LANGUAGE"
+  match "MATCH"
+  against "AGAINST"
 
 	/* The following tokens belong to NotKeywordToken. Notice: make sure these tokens are contained in NotKeywordToken. */
 	addDate			"ADDDATE"
@@ -939,6 +942,7 @@ import (
 	RoleNameString      "role name string"
 	RowFormat			"Row format option"
 	RowValue			"Row value"
+  SearchModifierOpt "Match against mode"
 	SelectLockOpt			"FOR UPDATE or LOCK IN SHARE MODE,"
 	SelectStmtCalcFoundRows		"SELECT statement optional SQL_CALC_FOUND_ROWS"
 	SelectStmtSQLBigResult		"SELECT statement optional SQL_BIG_RESULT"
@@ -1105,6 +1109,7 @@ import (
 	EnforcedOrNotOrNotNullOpt	"{[ENFORCED|NOT ENFORCED|NOT NULL]}"
 	Match			"[MATCH FULL | MATCH PARTIAL | MATCH SIMPLE]"
 	MatchOpt		"optional MATCH clause"
+  Against "Against expression"
 
 %type	<ident>
 	AsOpt			"AS or EmptyString"
@@ -2632,6 +2637,14 @@ Match:
 	{
 		$$ = ast.MatchSimple
 	}
+| "MATCH" '(' ColumnNameList ')' "AGAINST" '(' StringLiteral SearchModifierOpt ')'
+  {
+    $$ = &ast.MatchAgainst{
+      ColumnNames: $3.([]*ast.ColumnName),
+      Against: $7.(ast.ValueExpr),
+      Modifier: $8.(ast.SearchModifierMode),
+    }
+  }
 
 MatchOpt:
 	{
@@ -3910,6 +3923,34 @@ Expression:
 	}
 |	BoolPri
 
+SearchModifierOpt:
+	/* empty */
+	{
+		$$ = ast.SearchModifierNatureLanguageMode
+	}
+|	"IN" "NATURAL" "LANGUAGE" "MODE"
+	{
+		$$ = ast.SearchModifierNatureLanguageMode
+	}
+|	"IN" "NATURAL" "LANGUAGE" "MODE" "WITH" "QUERY" "EXPANSION"
+	{
+		$$ = ast.SearchModifierNatureLanguageMode | ast.SearchModifierWithQueryExpansion
+	}
+| "IN" "BOOLEAN" "MODE"
+	{
+		$$ = ast.SearchModifierBooleanMode
+	}
+| "WITH" "QUERY" "EXPANSION"
+	{
+		$$ = ast.SearchModifierWithQueryExpansion
+	}
+
+Against:
+  "AGAINST" StringLiteral
+  {
+    $$ = nil
+  }
+
 MaxValueOrExpression:
 	"MAXVALUE"
 	{
@@ -4445,8 +4486,9 @@ UnReservedKeyword:
 | "RECOVER" | "CIPHER" | "SUBJECT" | "ISSUER" | "X509" | "NEVER" | "EXPIRE" | "ACCOUNT" | "INCREMENTAL" | "CPU" | "MEMORY" | "BLOCK" | "IO" | "CONTEXT" | "SWITCHES" | "PAGE" | "FAULTS" | "IPC" | "SWAPS" | "SOURCE"
 | "TRADITIONAL" | "SQL_BUFFER_RESULT" | "DIRECTORY" | "HISTORY" | "LIST" | "NODEGROUP" | "SYSTEM_TIME" | "PARTIAL" | "SIMPLE" | "REMOVE" | "PARTITIONING" | "STORAGE" | "DISK" | "STATS_SAMPLE_PAGES" | "SECONDARY_ENGINE" | "SECONDARY_LOAD" | "SECONDARY_UNLOAD" | "VALIDATION"
 | "WITHOUT" | "RTREE" | "EXCHANGE" | "COLUMN_FORMAT" | "REPAIR" | "IMPORT" | "DISCARD" | "TABLE_CHECKSUM" | "UNICODE"
-| "SQL_TSI_DAY" | "SQL_TSI_HOUR" | "SQL_TSI_MINUTE" | "SQL_TSI_MONTH" | "SQL_TSI_QUARTER" | "SQL_TSI_SECOND" |
-"SQL_TSI_WEEK" | "SQL_TSI_YEAR" | "INVISIBLE" | "VISIBLE" | "TYPE" | "NOWAIT" | "REPLICA" | "LOCATION" | "LABELS"
+| "SQL_TSI_DAY" | "SQL_TSI_HOUR" | "SQL_TSI_MINUTE" | "SQL_TSI_MONTH" | "SQL_TSI_QUARTER" | "SQL_TSI_SECOND"
+| "SQL_TSI_WEEK" | "SQL_TSI_YEAR" | "INVISIBLE" | "VISIBLE" | "TYPE" | "NOWAIT" | "REPLICA" | "LOCATION" | "LABELS"
+| "LANGUAGE" | "EXPANSION" | "AGAINST" | "MATCH"
 
 TiDBKeyword:
  "ADMIN" | "AGG_TO_COP" |"BUCKETS" | "BUILTINS" | "CANCEL" | "CMSKETCH" | "DDL" | "DEPTH" | "DRAINER" | "JOBS" | "JOB" | "NODE_ID" | "NODE_STATE" | "PUMP" | "SAMPLES" | "STATS" | "STATS_META" | "STATS_HISTOGRAMS" | "STATS_BUCKETS" | "STATS_HEALTHY" | "TIDB"
@@ -9495,6 +9537,14 @@ WhereClause:
 	{
 		$$ = $2
 	}
+|	"WHERE" Match
+	{
+		$$ = $2
+	}
+| "WHERE" Against
+  {
+    $$ = $2
+  }
 
 WhereClauseOptional:
 	{

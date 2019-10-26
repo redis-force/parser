@@ -1273,3 +1273,31 @@ func (n *MaxValueExpr) Accept(v Visitor) (Node, bool) {
 	}
 	return v.Leave(n)
 }
+
+// VariableExpr is the expression for variable.
+type MatchAgainst struct {
+	exprNode
+	// ColumnNames are the columns to match.
+	ColumnNames []*ColumnName
+	// Against
+	Against ValueExpr
+	// Modifier
+	Modifier SearchModifierMode
+}
+
+func (n *MatchAgainst) Restore(ctx *RestoreCtx) error {
+	ctx.WriteKeyWord("MATCH_AGAINST")
+	return nil
+}
+
+func (n *MatchAgainst) Format(w io.Writer) {
+	fmt.Fprint(w, "MATCH_AGAINST")
+}
+
+func (n *MatchAgainst) Accept(v Visitor) (Node, bool) {
+	newNode, skipChildren := v.Enter(n)
+	if skipChildren {
+		return v.Leave(newNode)
+	}
+	return v.Leave(n)
+}

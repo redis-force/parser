@@ -658,15 +658,16 @@ const (
 // It corresponds to the statement `CREATE INDEX Name ON Table (Column);`
 // See https://dev.mysql.com/doc/refman/5.7/en/create-index.html
 type IndexInfo struct {
-	ID      int64          `json:"id"`
-	Name    CIStr          `json:"idx_name"`   // Index name.
-	Table   CIStr          `json:"tbl_name"`   // Table name.
-	Columns []*IndexColumn `json:"idx_cols"`   // Index columns.
-	Unique  bool           `json:"is_unique"`  // Whether the index is unique.
-	Primary bool           `json:"is_primary"` // Whether the index is primary key.
-	State   SchemaState    `json:"state"`
-	Comment string         `json:"comment"`    // Comment
-	Tp      IndexType      `json:"index_type"` // Index type: Btree, Hash or Rtree
+	ID       int64          `json:"id"`
+	Name     CIStr          `json:"idx_name"`    // Index name.
+	Table    CIStr          `json:"tbl_name"`    // Table name.
+	Columns  []*IndexColumn `json:"idx_cols"`    // Index columns.
+	Unique   bool           `json:"is_unique"`   // Whether the index is unique.
+	Primary  bool           `json:"is_primary"`  // Whether the index is primary key.
+	Fulltext bool           `json:"is_fulltext"` // Whether the index is fulltext.
+	State    SchemaState    `json:"state"`
+	Comment  string         `json:"comment"`    // Comment
+	Tp       IndexType      `json:"index_type"` // Index type: Btree, Hash or Rtree
 }
 
 // Clone clones IndexInfo.
